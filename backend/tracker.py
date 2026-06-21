@@ -4,7 +4,7 @@ from ultralytics import YOLO
 import cv2
 
 class VisionTracker:
-    def __init__(self, model_path='yolov8n.pt', confidence=0.5):
+    def __init__(self, model_path='../runs/detect/visionguard/weights/best.pt', confidence=0.5):
         # Same model as detector but we use track() instead of __call__()
         self.model = YOLO(model_path)
         self.confidence = confidence

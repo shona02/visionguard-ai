@@ -4,7 +4,7 @@ from ultralytics import YOLO
 import cv2
 
 class SafetyDetector:
-    def __init__(self, model_path='yolov8n.pt', confidence=0.5):
+    def __init__(self, model_path='../runs/detect/visionguard/weights/best.pt', confidence=0.5):
         # Load the model once when the class is created
         # Loading is expensive — we never want to do it per frame
         self.model = YOLO(model_path)
