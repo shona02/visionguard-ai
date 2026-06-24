@@ -20,28 +20,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create tracker and violation tracker ONCE at startup
 tracker = VisionTracker()
 violation_tracker = ViolationTracker(alert_seconds=5)
 
+# Store latest data globally
+latest_tracked = []
+latest_alerts = []
+
 def generate_frames():
+    global latest_tracked, latest_alerts
     cap = cv2.VideoCapture(0)
+    frame_count = 0
 
     while True:
         ret, frame = cap.read()
         if not ret:
-            break
+            continue
 
-        # Get tracked objects with IDs
-        tracked_objects = tracker.track(frame)
+        frame_count += 1
 
-        # Update violation timers
-        violation_tracker.update(tracked_objects)
+        # Run YOLO every 3rd frame only
+        if frame_count % 5 == 0:
+    # Resize to smaller image for faster inference
+            small = cv2.resize(frame, (320, 240))
+            latest_tracked = tracker.track(small)
+            violation_tracker.update(latest_tracked)
+            latest_alerts = violation_tracker.active_alerts
+            annotated = tracker.annotate(small)
+            # Resize back to display size
+            annotated = cv2.resize(annotated, (640, 480))
+        else:
+            annotated = frame
 
-        # Get annotated frame with track IDs drawn
-        annotated = tracker.annotate(frame)
-
-        # Encode to JPEG
         _, buffer = cv2.imencode('.jpg', annotated)
         frame_bytes = buffer.tobytes()
 
@@ -67,16 +77,8 @@ def video_feed():
 
 @app.get("/tracked")
 def get_tracked():
-    # Returns currently tracked objects with their IDs
-    cap = cv2.VideoCapture(0)
-    ret, frame = cap.read()
-    cap.release()
-    if not ret:
-        return {"tracked": []}
-    return {"tracked": tracker.track(frame)}
+    return {"tracked": latest_tracked}
 
 @app.get("/alerts")
 def get_alerts():
-    # Returns active safety violations
-    # React frontend polls this every second to show alerts
-    return {"alerts": violation_tracker.active_alerts}
+    return {"alerts": latest_alerts}
