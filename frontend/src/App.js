@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 
-const BACKEND = "http://localhost:8000";
+const BACKEND = process.env.REACT_APP_BACKEND_URL || "http://localhost:8000";
 
 function App() {
   const [alerts, setAlerts] = useState([]);
